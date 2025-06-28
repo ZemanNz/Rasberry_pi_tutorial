@@ -2,6 +2,18 @@
 
 Tento návod popisuje krok za krokem, jak na Raspberry Pi 5 vytvořit automaticky spouštěný Wi-Fi hotspot pomocí NetworkManageru a jak se k němu připojit přes SSH.
 
+Co to umí?
+
+Raspberry Pi po startu automaticky vytvoří Wi-Fi Access Point (SSID Hostspot) a spustí DHCP/NAT.
+
+Klient (notebook/telefon) se připojí k Hostspot a získá IP adresu z podsítě (10.42.0.x nebo 192.168.6.x).
+
+SSH přístup do Pi přes ssh pi@<IP>, bez nutnosti přímého kabelového připojení.
+
+Sdílení internetu: pokud je Pi připojeno k internetu přes Ethernet, nebo druhou Wi-Fi (např. USB dongle), klienti připojení na Hostspot mají internet.
+
+Poznámka: Pi vestavěnou Wi-Fi (wlan0) nelze současně používat jako klient i AP – pro Wi-Fi uplink je nutný druhý adaptér.
+
 ## 1. Příprava systému
 
 ```bash
