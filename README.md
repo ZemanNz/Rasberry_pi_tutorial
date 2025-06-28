@@ -154,4 +154,117 @@ Díky `autoconnect yes` a `mode ap` se po každém restartu Raspberry Pi:
   ffplay /dev/video0
   ```
 
+# SledovaniBarev na Raspberry Pi 5
+
+Tento README popisuje, jak na Raspberry Pi 5 spustit projekt **SledovaniBarev**, který zpracovává obraz z USB kamery nebo statického obrázku v C++, pomocí OpenCV.
+
+## 📦 Předpoklady
+
+* Raspberry Pi 5 s Raspberry Pi OS (Desktop nebo Lite + X server)
+* SSH přístup k Pi (např. `ssh pi@10.42.0.1`)
+* USB kamera v UVC režimu (viditelná jako `/dev/video0`)
+* Projekt **SledovaniBarev** přenesený do `~/Desktop/SledovaniBarev`
+
+## 1. Přenos projektu na Pi
+
+
+### ) SCP (alternativa)
+
+Na vašem notebooku:
+
+```bash
+scp -r ~/Plocha/PROGRAMING/C++/SledovaniBarev pi@10.42.0.1:/home/pi/Desktop/
+```
+
+---
+
+## 2. Instalace závislostí
+
+```bash
+sudo apt update
+sudo apt install -y build-essential cmake libopencv-dev
+```
+
+* **build-essential**: GCC, make
+* **cmake**: build system
+* **libopencv-dev**: hlavičky a knihovny OpenCV
+
+---
+
+## 3. Kompilace projektu
+
+Přejdi do složky projektu a vytvoř build adresář:
+
+```bash
+cd ~/Desktop/SledovaniBarev
+mkdir -p build && cd build
+```
+
+### A) S CMake
+
+```bash
+cmake ..
+make -j4
+```
+
+### B) Přímo s g++ (jednorázově)
+
+```bash
+g++ ../main.cpp -o SledovaniBarev `pkg-config --cflags --libs opencv4`
+```
+* ale zatim negunguje
+---
+
+## 4. Spuštění
+
+### A) Živé video z kamery
+
+```bash
+cd ~/Desktop/SledovaniBarev/build
+export DISPLAY=:0
+./SledovaniBarev /dev/video0
+```
+
+Zajistí, že se okno objeví na připojeném HDMI monitoru.
+
+### B) Zpracování statického obrázku
+
+```bash
+cd ~/Desktop/SledovaniBarev/build
+./SledovaniBarev ../vstup.jpg
+```
+# je taky mozny si to zkompilovat na notebooku a potom to hodit na rasberry, a to staci jen treba : 
+```bash
+./sledovani
+```
+*pokud se ti to zkompilovalo do souboru sledovani, kdyz jsem to delal tim druhym zpusobem, tak si to vytvorilo vlastni soubor SledovaniBarev
+---
+
+## 5. Automatické spouštění po bootu (volitelné)
+
+1. Vytvoř `/etc/systemd/system/sledovani.service`:
+
+   ```ini
+   [Unit]
+   Description=SledovaniBarev service
+   After=multi-user.target
+
+   [Service]
+   ExecStart=/home/pi/Desktop/SledovaniBarev/build/SledovaniBarev /dev/video0
+   WorkingDirectory=/home/pi/Desktop/SledovaniBarev/build
+   Restart=always
+   User=pi
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+2. Aktivace:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable sledovani.service
+sudo systemctl start sledovani.service
+```
+
+---
 
