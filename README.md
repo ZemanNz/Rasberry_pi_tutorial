@@ -25,14 +25,17 @@ sudo nmcli connection add \
 * `ifname wlan0` – vestavěná Wi-Fi karta
 * `con-name Hostspot` – interní název profilu
 * `autoconnect yes` – spustí se po restartu
-* `ssid Hostspot` – viditelné jméno sítě
-
+* `ssid Hostspot` – viditelné jméno sítě např: Pi_Bur_01
+```bash
+sudo nmcli connection add \
+  type wifi ifname wlan0 con-name Pi_Bur_01 autoconnect yes ssid Pi_Bur_01
+```
 ---
 
 ## 3. Přepnutí do režimu Access Point + NAT/DHCP
 
 ```bash
-sudo nmcli connection modify Hostspot \
+sudo nmcli connection modify Pi_Bur_01 \
   802-11-wireless.mode ap \
   802-11-wireless.band bg \
   ipv4.method shared
@@ -47,8 +50,8 @@ sudo nmcli connection modify Hostspot \
 ## 4. Nastavení zabezpečení (WPA2‑PSK)
 
 ```bash
-sudo nmcli connection modify Hostspot wifi-sec.key-mgmt wpa-psk
-sudo nmcli connection modify Hostspot wifi-sec.psk "SuperHeslo123"
+sudo nmcli connection modify Pi_Bur_01 wifi-sec.key-mgmt wpa-psk
+sudo nmcli connection modify Pi_Bur_01 wifi-sec.psk "sokolska"
 ```
 
 * `wifi-sec.key-mgmt wpa-psk` – WPA2‑Personal
@@ -56,17 +59,7 @@ sudo nmcli connection modify Hostspot wifi-sec.psk "SuperHeslo123"
 
 ---
 
-## 5. (Volitelné) Pevná IP pro hotspot
-
-```bash
-sudo nmcli connection modify Hostspot ipv4.addresses 192.168.6.1/24
-```
-
-* Nastaví gateway AP na `192.168.6.1`.
-
----
-
-## 6. Aktivace hotspotu ihned
+## 5. Aktivace hotspotu ihned
 
 ```bash
 sudo nmcli connection up Hostspot
@@ -78,8 +71,8 @@ sudo nmcli connection up Hostspot
 
 ## 7. Ověření a připojení klienta
 
-1. Na zařízení (notebook/telefon) vyhledej síť **Hostspot**.
-2. Připoj se heslem **SuperHeslo123**.
+1. Na zařízení (notebook/telefon) vyhledej síť **Pi_Bur_01**.
+2. Připoj se heslem **sokolska**.
 3. Na Linuxu ověř IP:
 
    ```bash
@@ -94,7 +87,7 @@ sudo nmcli connection up Hostspot
 ## 8. SSH přístup
 
 ```bash
-ssh pi@<gateway_IP>
+ ssh pi@10.42.0.1
 ```
 
 * Uživatel: `pi`
@@ -110,13 +103,6 @@ Díky `autoconnect yes` a `mode ap` se po každém restartu Raspberry Pi:
 2. spustí NAT a DHCP
 3. začne vysílat **Hostspot**
 
-### Připojení z klienta v jednom řádku
-
-```bash
-nmcli device wifi connect Hostspot password SuperHeslo123 && ssh pi@192.168.6.1
-```
-
----
 
 ## Tipy & rozšíření
 
