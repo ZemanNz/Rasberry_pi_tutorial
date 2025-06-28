@@ -148,8 +148,8 @@ Díky `autoconnect yes` a `mode ap` se po každém restartu Raspberry Pi:
   sudo dmesg -w
   lsusb
   ---
- zjistite, jestli rasberry zachytilo kameru
-*spusteni streamu z kamery na monitor:
+* zjistite, jestli rasberry zachytilo kameru
+* spusteni streamu z kamery na monitor:
 ```bash
   ffplay /dev/video0
   ---
