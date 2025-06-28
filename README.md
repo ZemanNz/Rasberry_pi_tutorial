@@ -1,1 +1,140 @@
-# Rasberry_pi_tutorial
+# Raspberry Pi 5 Wi-Fi Hotspot & SSH Access Setup
+
+Tento návod popisuje krok za krokem, jak na Raspberry Pi 5 vytvořit automaticky spouštěný Wi-Fi hotspot pomocí NetworkManageru a jak se k němu připojit přes SSH.
+
+## 1. Příprava systému
+
+```bash
+sudo apt update
+sudo apt install -y network-manager openssh-server
+```
+
+* **NetworkManager** spravuje hotspot.
+* **OpenSSH Server** umožní SSH přístup.
+
+---
+
+## 2. Vytvoření profilu hotspotu
+
+```bash
+sudo nmcli connection add \
+  type wifi ifname wlan0 con-name Hostspot autoconnect yes ssid Hostspot
+```
+
+* `type wifi` – Wi-Fi připojení
+* `ifname wlan0` – vestavěná Wi-Fi karta
+* `con-name Hostspot` – interní název profilu
+* `autoconnect yes` – spustí se po restartu
+* `ssid Hostspot` – viditelné jméno sítě
+
+---
+
+## 3. Přepnutí do režimu Access Point + NAT/DHCP
+
+```bash
+sudo nmcli connection modify Hostspot \
+  802-11-wireless.mode ap \
+  802-11-wireless.band bg \
+  ipv4.method shared
+```
+
+* `mode ap` – Access Point
+* `band bg` – 2.4 GHz, režimy b/g
+* `ipv4.method shared` – NAT + DHCP automaticky
+
+---
+
+## 4. Nastavení zabezpečení (WPA2‑PSK)
+
+```bash
+sudo nmcli connection modify Hostspot wifi-sec.key-mgmt wpa-psk
+sudo nmcli connection modify Hostspot wifi-sec.psk "SuperHeslo123"
+```
+
+* `wifi-sec.key-mgmt wpa-psk` – WPA2‑Personal
+* `wifi-sec.psk` – heslo (alespoň 8 znaků)
+
+---
+
+## 5. (Volitelné) Pevná IP pro hotspot
+
+```bash
+sudo nmcli connection modify Hostspot ipv4.addresses 192.168.6.1/24
+```
+
+* Nastaví gateway AP na `192.168.6.1`.
+
+---
+
+## 6. Aktivace hotspotu ihned
+
+```bash
+sudo nmcli connection up Hostspot
+```
+
+* AP začne vysílat a je připraven k použití.
+
+---
+
+## 7. Ověření a připojení klienta
+
+1. Na zařízení (notebook/telefon) vyhledej síť **Hostspot**.
+2. Připoj se heslem **SuperHeslo123**.
+3. Na Linuxu ověř IP:
+
+   ```bash
+   ip addr show <tvé_wifi_iface> | grep inet
+   ip route | grep default
+   ```
+
+   * Gateway je IP Raspberry Pi (např. `10.42.0.1` nebo `192.168.6.1`).
+
+---
+
+## 8. SSH přístup
+
+```bash
+ssh pi@<gateway_IP>
+```
+
+* Uživatel: `pi`
+* Heslo: to, co máš pro `pi` (výchozí `raspberry` nebo své vlastní).
+
+---
+
+## 9. Autostart po rebootu
+
+Díky `autoconnect yes` a `mode ap` se po každém restartu Raspberry Pi:
+
+1. `wlan0` přepne do AP módu
+2. spustí NAT a DHCP
+3. začne vysílat **Hostspot**
+
+### Připojení z klienta v jednom řádku
+
+```bash
+nmcli device wifi connect Hostspot password SuperHeslo123 && ssh pi@192.168.6.1
+```
+
+---
+
+## Tipy & rozšíření
+
+* **Sdílení internetu**: připoj Pi k Ethernetu; NAT funguje automaticky.
+* **Změna SSID/hesla**:
+
+  ```bash
+  sudo nmcli connection modify Hostspot 802-11-wireless.ssid "NewSSID"
+  sudo nmcli connection modify Hostspot wifi-sec.psk "NewPassword123"
+  sudo nmcli connection down Hostspot && sudo nmcli connection up Hostspot
+  ```
+* **Skrytá síť**:
+
+  ```bash
+  sudo nmcli connection modify Hostspot 802-11-wireless.hidden yes
+  sudo nmcli connection down Hostspot && sudo nmcli connection up Hostspot
+  ```
+
+---
+
+*Hotovo! Teď máš spolehlivý SSH přístup přes vlastní Wi‑Fi hotspot, který se automaticky spustí při startu.*
