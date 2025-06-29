@@ -190,49 +190,89 @@ sudo apt install -y build-essential cmake libopencv-dev
 * **libopencv-dev**: hlavičky a knihovny OpenCV
 
 ---
+-----------------------------------------------------------------------------------------------
 
-## 3. Kompilace projektu
+## 3. Jednorázová kompilace bez CMake
 
-Přejdi do složky projektu a vytvoř build adresář:
+1. Přejdi do složky projektu:
 
-```bash
-cd ~/Desktop/SledovaniBarev
-mkdir -p build && cd build
-```
+   ```bash
+   cd ~/Desktop/SledovaniBarev
+   ```
+2. Sestav program příkazem:
 
-### A) S CMake
+   ```bash
+   g++ main.cpp -o sledovani `pkg-config --cflags --libs opencv4`
+   ```
 
-```bash
-cmake ..
-make -j4
-```
+   * `-o sledovani` vytvoří binárku `sledovani`
+   * back-ticks spustí `pkg-config` pro nastavení OpenCV
 
-### B) Přímo s g++ (jednorázově)
-
-```bash
-g++ ../main.cpp -o SledovaniBarev `pkg-config --cflags --libs opencv4`
-```
-* ale zatim negunguje
 ---
 
-## 4. Spuštění
+## 4. Spuštění programu
 
-### A) Živé video z kamery
+> **Poznámka**: Pro zobrazení GUI na HDMI monitoru je nutné nastavit `DISPLAY`
+
+1. Přejdi do projektu:
+
+   ```bash
+   cd ~/Desktop/SledovaniBarev
+   ```
+2. Nastav X display:
+
+   ```bash
+   export DISPLAY=:0
+   ```
+3. Spus sledování z USB kamery:
+
+   ```bash
+   ./sledovani /dev/video0
+   ```
+4. (Alternativa) Zpracování statického obrázku:
+
+   ```bash
+   ./sledovani vstup.jpg
+   ```
+
+---
+
+## 5. CMake varianta (volitelné)
+
+1. Vytvoř build adresář a přejdi do něj:
+
+   ```bash
+   cd ~/Desktop/SledovaniBarev
+   mkdir -p build && cd build
+   ```
+2. Generuj a sestav:
+
+   ```bash
+   cmake ..
+   make -j4
+   ```
+3. Spus program:
+
+   ```bash
+   export DISPLAY=:0
+   ./SledovaniBarev /dev/video0
+   ```
+
+---
+
+## 6. Rychlé připojení a spuštění z notebooku
 
 ```bash
-cd ~/Desktop/SledovaniBarev/build
-export DISPLAY=:0
-./SledovaniBarev /dev/video0
+ssh pi@10.42.0.1 \
+'cd ~/Desktop/SledovaniBarev && \
+ g++ main.cpp -o sledovani `pkg-config --cflags --libs opencv4` && \
+ export DISPLAY=:0 && \
+ ./sledovani /dev/video0'
 ```
 
-Zajistí, že se okno objeví na připojeném HDMI monitoru.
+---
 
-### B) Zpracování statického obrázku
-
-```bash
-cd ~/Desktop/SledovaniBarev/build
-./SledovaniBarev ../vstup.jpg
-```
+-----------------------------------------------------------------------------------------------
 
 
 ## 5. Automatické spouštění po bootu (volitelné)
