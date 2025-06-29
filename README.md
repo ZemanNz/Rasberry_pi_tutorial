@@ -274,10 +274,19 @@ ssh pi@10.42.0.1 \
 
 -----------------------------------------------------------------------------------------------
 
-
 ## 7. Automatické spouštění po bootu (volitelné)
 
-1. Vytvoř `/etc/systemd/system/sledovani.service`:
+Tato část ukazuje, jak zajistit, aby se SledovaniBarev spustil automaticky po startu Raspberry Pi.
+
+### 7.1. Vytvoření systemd jednotky
+
+1. Otevři nový soubor jednotky v editoru Nano (nebo jiném):
+
+   ```bash
+   sudo nano /etc/systemd/system/sledovani.service
+   ```
+
+2. Vlož do něj následující obsah:
 
    ```ini
    [Unit]
@@ -293,13 +302,51 @@ ssh pi@10.42.0.1 \
    [Install]
    WantedBy=multi-user.target
    ```
-2. Aktivace:
+
+   * **ExecStart**: cesta ke spustitelnému souboru a argument (/dev/video0)
+   * **WorkingDirectory**: adresář, kde služba běží
+   * **Restart=always**: znovu spustí, pokud program spadne
+   * **User=pi**: služba poběží pod uživatelem `pi`
+
+3. Ulož změny:
+
+   * Stiskni `Ctrl+O`, poté `Enter` pro potvrzení
+   * Ukonči Nano s `Ctrl+X`
+
+### 7.2. Aktivace a spuštění služby
+
+1. Načti nové jednotky a aktualizuj systemd:
+
+   ```bash
+   sudo systemctl daemon-reload
+   ```
+2. Povolení automatického spouštění služby při bootu:
+
+   ```bash
+   sudo systemctl enable sledovani.service
+   ```
+3. Okamžité spuštění služby bez restartu:
+
+   ```bash
+   sudo systemctl start sledovani.service
+   ```
+4. Ověř stav služby:
+
+   ```bash
+   sudo systemctl status sledovani.service
+   ```
+
+   * Měl bys vidět **Active: active (running)**
+
+### 7.3. Zobrazení logů služby
+
+Pro sledování výstupu služby (např. debug zpráv) použij:
 
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable sledovani.service
-sudo systemctl start sledovani.service
+sudo journalctl -u sledovani.service -f
 ```
+
+* `-f` sleduje log v reálném čase
 
 ---
 
