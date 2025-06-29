@@ -331,12 +331,16 @@ Tato část ukazuje, jak zajistit, aby se SledovaniBarev spustil automaticky po 
    ```bash
    sudo systemctl enable sledovani.service
    ```
-3. Okamžité spuštění služby bez restartu:
+   deaktivace :
+  ```bash
+   sudo systemctl disable sledovani.service
+   ```
+4. Okamžité spuštění služby bez restartu:
 
    ```bash
    sudo systemctl start sledovani.service
    ```
-4. Ověř stav služby:
+5. Ověř stav služby:
 
    ```bash
    sudo systemctl status sledovani.service
