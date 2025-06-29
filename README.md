@@ -275,7 +275,7 @@ ssh pi@10.42.0.1 \
 -----------------------------------------------------------------------------------------------
 
 
-## 5. Automatické spouštění po bootu (volitelné)
+## 7. Automatické spouštění po bootu (volitelné)
 
 1. Vytvoř `/etc/systemd/system/sledovani.service`:
 
@@ -303,3 +303,35 @@ sudo systemctl start sledovani.service
 
 ---
 
+## 8. Opakovaný přenos a spuštění po úpravách
+
+Když upravíš kód na **notebooku**, stačí spustit tyto příkazy, které přenesou nejnovější změny, přeloží program pro ARM architekturu na Pi a okamžitě ho spustí:
+
+1. **Přenos souborů na Raspberry Pi**
+
+   ```bash
+   # Ze složky projektu na notebooku
+   scp -r ~/Plocha/PROGRAMING/C++/SledovaniBarev/* \
+     pi@10.42.0.1:/home/pi/Desktop/SledovaniBarev/
+   ```
+
+   * `-r` kopíruje celý obsah včetně podadresářů
+
+2. **SSH do Pi a kompilace**
+
+   ```bash
+   ssh pi@10.42.0.1
+   cd ~/Desktop/SledovaniBarev
+   g++ main.cpp -o sledovani `pkg-config --cflags --libs opencv4`
+   ```
+
+   * Přihlásíš se do Pi a přeložíš `main.cpp` pro ARM64
+
+3. **Spuštění programu s kamerou**
+
+   ```bash
+   export DISPLAY=:0
+   ./sledovani /dev/video0
+   ```
+
+Hotovo! Po těchto krocích poběží nejnovější verze SledovaniBarev na Raspberry Pi 5 bez nutnosti manuálního mazání starých binárek.
