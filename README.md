@@ -276,7 +276,7 @@ ssh pi@10.42.0.1 \
 
 ## 7. Automatické spouštění po bootu (volitelné)
 
-Tato část ukazuje, jak zajistit, aby se SledovaniBarev spustil automaticky po startu Raspberry Pi.
+Tato část ukazuje, jak zajistit, aby se SledovaniBarev spustil automaticky po startu Raspberry Pi.
 
 ### 7.1. Vytvoření systemd jednotky
 
@@ -294,8 +294,12 @@ Tato část ukazuje, jak zajistit, aby se SledovaniBarev spustil automaticky po 
    After=multi-user.target
 
    [Service]
-   ExecStart=/home/pi/Desktop/SledovaniBarev/build/SledovaniBarev /dev/video0
-   WorkingDirectory=/home/pi/Desktop/SledovaniBarev/build
+   Environment=DISPLAY=:0
+   StandardOutput=inherit
+   StandardError=inherit
+   ExecStartPre=/bin/sleep 30
+   ExecStart=/home/pi/Desktop/SledovaniBarev/sledovani /dev/video0
+   WorkingDirectory=/home/pi/Desktop/SledovaniBarev
    Restart=always
    User=pi
 
@@ -303,9 +307,11 @@ Tato část ukazuje, jak zajistit, aby se SledovaniBarev spustil automaticky po 
    WantedBy=multi-user.target
    ```
 
-   * **ExecStart**: cesta ke spustitelnému souboru a argument (/dev/video0)
-   * **WorkingDirectory**: adresář, kde služba běží
-   * **Restart=always**: znovu spustí, pokud program spadne
+   * **Environment=DISPLAY=:0**: zajistí zobrazení okna OpenCV na připojeném monitoru
+   * **ExecStartPre=/bin/sleep 30**: počká, až se grafické prostředí načte
+   * **ExecStart**: cesta ke spustitelnému souboru `sledovani` a argument `/dev/video0`
+   * **WorkingDirectory**: adresář, kde služba poběží
+   * **Restart=always**: služba se restartuje, pokud spadne
    * **User=pi**: služba poběží pod uživatelem `pi`
 
 3. Ulož změny:
@@ -347,8 +353,7 @@ sudo journalctl -u sledovani.service -f
 ```
 
 * `-f` sleduje log v reálném čase
-
----
+-------------------------------------------------------------
 
 ## 8. Opakovaný přenos a spuštění po úpravách
 
