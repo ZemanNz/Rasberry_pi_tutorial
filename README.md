@@ -233,12 +233,7 @@ Zajistí, že se okno objeví na připojeném HDMI monitoru.
 cd ~/Desktop/SledovaniBarev/build
 ./SledovaniBarev ../vstup.jpg
 ```
-# je taky mozny si to zkompilovat na notebooku a potom to hodit na rasberry, a to staci jen treba : 
-```bash
-./sledovani
-```
-*pokud se ti to zkompilovalo do souboru sledovani, kdyz jsem to delal tim druhym zpusobem, tak si to vytvorilo vlastni soubor SledovaniBarev
----
+
 
 ## 5. Automatické spouštění po bootu (volitelné)
 
