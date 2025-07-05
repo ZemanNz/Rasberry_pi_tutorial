@@ -391,3 +391,125 @@ Když upravíš kód na **notebooku**, stačí spustit tyto příkazy, které p�
    ```
 
 Hotovo! Po těchto krocích poběží nejnovější verze SledovaniBarev na Raspberry Pi 5 bez nutnosti manuálního mazání starých binárek.
+
+
+## UART komunikace mezi Raspberry Pi 5 a ESP32
+
+Tato sekce popisuje, jak propojit Raspberry Pi 5 a ESP32 pomocí UART (seriové linky), ukázku kódu na obou zařízeních a vysvětlení, co je potřeba nakonfigurovat.
+
+---
+
+### 1. Požadavky
+
+* Raspberry Pi 5 s nainstalovaným Raspberry Pi OS
+* ESP32 (Arduino Core nebo vestavěné UART2/Serial2 dostupné)
+* Propojovací kabely (dupont)
+* Společná zem (**GND**)
+
+---
+
+### 2. Hardwarové zapojení
+
+```
+Raspberry Pi 5 (40pin)       ESP32
+------------------------       ----------------
+GND (pin 6, 9, 14, ...)   →    GND
+TX  (GPIO14, pin 8)       →    RX2 (např. GPIO16)
+RX  (GPIO15, pin 10)      ←    TX2 (např. GPIO17)
+```
+
+> **Poznámka:** Obě zařízení používají logické úrovně 3.3 V, takže není potřeba žádný převodník napětí.
+
+---
+
+### 3. Konfigurace Raspberry Pi
+
+1. Vypnutí sériové konzole (serial console), aby bylo UART čistě pro vaši aplikaci:
+
+   ```bash
+   sudo raspi-config
+   # Interface Options → Serial Port
+   # „Would you like a login shell over serial?“ → No
+   # „Enable UART hardware?“ → Yes
+   sudo reboot
+   ```
+
+2. Ověření dostupnosti UART:
+
+   ```bash
+   ls -l /dev/serial0
+   # nebo
+   dmesg | grep ttyAMA0
+   ```
+
+3. Příklad použití v Pythonu (pomocí pyserial):
+
+   ```python
+   import serial
+
+   # Otevřeme UART (/dev/serial0 alias /dev/ttyAMA0) na 115200 baud
+   ser = serial.Serial('/dev/serial0', 115200, timeout=1)
+   ser.write(b'Ahoj ze Raspberry Pi!')
+   data = ser.readline().decode('utf-8').strip()
+   print(f"Přijaté: {data}")
+   ser.close()
+   ```
+
+---
+
+### 4. Konfigurace ESP32 (Arduino)
+
+```cpp
+#include <HardwareSerial.h>
+
+// Použijeme Serial2: RX na GPIO16, TX na GPIO17
+HardwareSerial Serial2(2);
+
+void setup() {
+  // Debug přes USB
+  Serial.begin(115200);
+  // UART2 na zvolených pinech
+  Serial2.begin(115200, SERIAL_8N1, 16, 17);
+  Serial.println("ESP32 UART2 připraven...");
+}
+
+void loop() {
+  // Čteme ze sériové linky od Raspberry Pi
+  if (Serial2.available()) {
+    String msg = Serial2.readStringUntil('\n');
+    Serial.print("Dostáno z Pi: ");
+    Serial.println(msg);
+    // Odeslání odpovědi: echo
+    Serial2.println("Echo: " + msg);
+  }
+}
+```
+
+> **Poznámka:** Vyberte si volné piny pro RX2/TX2, v příkladu používáme GPIO16 a GPIO17.
+
+---
+
+### 5. Princip fungování
+
+1. **Křížové propojení**: TX ↔ RX + společná GND.
+2. **Logické úrovně**: obě strany 3.3 V → bezpečné propojení bez převodníků.
+3. **Serial console** na Raspberry Pi se vypne, jinak by se UART používal systémem pro přihlášení a výpis bootovacích zpráv.
+4. **Komunikační rychlost** (baudrate) musí být stejná na obou stranách (např. 115200 bd).
+5. Aplikace si mohou vzájemně posílat data – viz ukázky kódu.
+
+---
+
+### 6. Tipy a doporučení
+
+* Použijte `minicom` nebo `screen` pro rychlý test UART na Raspberry Pi:
+
+  ```bash
+  sudo apt install minicom
+  minicom -b 115200 -D /dev/serial0
+  ```
+* Pro stabilnější linku se hodí zkombinovat **RC filtr** nebo **odporový dělič** při delších kabelech.
+
+---
+
+*Hotovo!* Teď už můžeš používat UART mezi Raspberry Pi 5 a ESP32 v libovolné vlastní aplikaci.
+
