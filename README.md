@@ -513,7 +513,7 @@ void loop() {
 
 *Hotovo!* Teď už můžeš používat UART mezi Raspberry Pi 5 a ESP32 v libovolné vlastní aplikaci.
 
-#Kompletní průvodce tréninkem AI modelu
+### Kompletní průvodce tréninkem AI modelu
 
 Tento README tě provede od úplného začátku až po nasazení vlastního YOLOv5 modelu na detekci červených, zelených, modrých kostek a červeného čtverce.
 
