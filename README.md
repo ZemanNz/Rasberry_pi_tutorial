@@ -513,3 +513,212 @@ void loop() {
 
 *Hotovo!* Teď už můžeš používat UART mezi Raspberry Pi 5 a ESP32 v libovolné vlastní aplikaci.
 
+#Kompletní průvodce tréninkem AI modelu
+
+Tento README tě provede od úplného začátku až po nasazení vlastního YOLOv5 modelu na detekci červených, zelených, modrých kostek a červeného čtverce.
+
+---
+
+## 📁 Struktura projektu
+
+```
+projekt/
+├── dataset/
+│   ├── raw_images/           ← surové snímky z kamery (capture.py)
+│   ├── images/
+│   │   ├── train/            ← 80% obrázků (po splitu)
+│   │   └── val/              ← 20% obrázků (po splitu)
+│   └── labels/
+│       ├── train/            ← YOLO anotace pro train
+│       └── val/              ← YOLO anotace pro val
+├── yolov5/                   ← klon YOLOv5 repozitáře
+│   ├── data/
+│   │   └── cubes.yaml        ← konfigurační YAML se cestami a třídami
+│   ├── models/
+│   ├── train.py
+│   ├── detect.py
+│   └── requirements.txt
+├── capture.py                ← skript pro sběr snímků (F = uložení, Q = konec)
+├── split.py                  ← skript na rozdělení raw_images → images/train, images/val
+├── annotate.py               ← vlastní annotátor v OpenCV pro kreslení boxů
+└── test.py                   ← ukázkový inference skript
+```
+
+---
+
+## 🔧 1. Sběr snímků
+
+Použij `capture.py`, které seskriptuje kameru a při stisku **F** uloží snímek do `dataset/raw_images/`.
+
+```bash
+# Ujisti se, že máš instalované OpenCV:
+# pip install opencv-python
+
+python3 capture.py --output dataset/raw_images
+```
+
+* **F**: uloží aktuální snímek jako `timestamp.jpg`
+* **Q**: ukončí snímání
+
+Nasnímej \~800–1000 snímků, kombinuj scény s více objekty (červená, zelená, modrá kostka + červený čtverec).
+
+---
+
+## 🔀 2. Rozdělení na train / val
+
+Po nasbírání spusť `split.py`, který náhodně provede 80/20 rozdělení.
+
+```bash
+python3 split.py
+```
+
+Po úspěchu budeš mít:
+
+```
+dataset/images/train/ ─ 80% všech .jpg
+dataset/images/val/   ─ 20% všech .jpg
+```
+
+---
+
+## ✍️ 3. Anotace obrázků
+
+Spusť `annotate.py` pro offline kreslení bounding boxů a uložení YOLO `.txt` anotací.
+
+```bash
+python3 annotate.py
+```
+
+**Ovládání:**
+
+* **R/G/B/Z**: volba třídy (`cube_red`, `cube_green`, `cube_blue`, `zone_red`)
+* **Levý tlačítko**: začít a táhnout box
+* **S**: uložit `.txt` a přejít na další obrázek
+* **N**: přejít na další bez uložení
+* **P**: předchozí obrázek
+* **Q**: ukončit
+
+Výsledkem budou soubory:
+
+```
+dataset/labels/train/img_XXX.txt
+dataset/labels/val/img_YYY.txt
+```
+
+Každý `.txt` může obsahovat více řádků: `<class_id> <x_c> <y_c> <w> <h>` (yolo-normalizované).
+
+---
+
+## 📦 4. Příprava YOLOv5
+
+### A) Klon repozitáře
+
+```bash
+git clone https://github.com/ultralytics/yolov5.git
+cd yolov5
+```
+
+### B) Instalace závislostí (obejdi "externally-managed")
+
+```bash
+pip install --break-system-packages -r requirements.txt
+```
+
+> **Poznámka:** Pokud nechceš riskovat, můžeš použít:
+>
+> ```bash
+> python3 -m venv venv
+> source venv/bin/activate
+> pip install -r requirements.txt
+> ```
+
+---
+
+## ⚙️ 5. Konfigurace datasetu
+
+Vytvoř `yolov5/data/cubes.yaml` s obsahem:
+
+```yaml
+train: ../dataset/images/train
+val:   ../dataset/images/val
+
+nc: 4
+names: ['cube_red','cube_green','cube_blue','zone_red']
+```
+
+---
+
+## 🚀 6. Trénink modelu
+
+Spusť trénink YOLOv5n (nano) s předtrénovanými váhami:
+
+```bash
+python3 train.py \
+  --img 640 \
+  --batch 16 \
+  --epochs 100 \
+  --data data/cubes.yaml \
+  --cfg models/yolov5n.yaml \
+  --weights yolov5n.pt \
+  --name cubes-exp1
+```
+
+Po skončení najdeš výsledky v:
+
+```
+yolov5/runs/train/cubes-exp1/
+  ├─ weights/best.pt
+  ├─ weights/last.pt
+  └─ results.png
+```
+
+### Pokračování tréninku (resume)
+
+```bash
+python3 train.py --resume runs/train/cubes-exp1 --exist-ok
+```
+
+---
+
+## 🎯 7. Inference / Detekce
+
+### A) Test na validačních obrázcích
+
+```bash
+python3 detect.py \
+  --weights runs/train/cubes-exp1/weights/best.pt \
+  --source ../dataset/images/val \
+  --conf 0.4 \
+  --save-txt \
+  --project detect-test
+```
+
+### B) Real-time z kamery
+
+```bash
+python3 detect.py \
+  --weights runs/train/cubes-exp1/weights/best.pt \
+  --source 0 \
+  --conf 0.4 \
+  --view-img
+```
+
+Pro vlastní skript `test.py` s importem přes `torch.hub`:
+
+```python
+model = torch.hub.load('ultralytics/yolov5', 'custom', path='runs/train/cubes-exp1/weights/best.pt')
+```
+
+---
+
+## 💡 8. Tipy a doporučení
+
+* **Augmentace**: v `hyp.scratch-low.yaml` povol rotace, změnu jasu a ořezy
+* **Vyšší rozlišení**: pro malé objekty zvaž `--img 800` nebo `1024`
+* **Early stopping**: přidej `--patience 30` pro automatické ukončení při stagnaci
+* **Test na různé scény**: nasbírej více validačních obrázků z různých úhlů a světelných podmínek
+
+---
+
+
+
