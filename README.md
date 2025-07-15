@@ -836,7 +836,15 @@ Tento krok můžeš provést ručně přes grafické menu, než přejdeš ke kon
   
   ukázkový kod pro esp32 nachazi se zde pod nazvem esp_uart ----slozka
 
-  take je tu projekt, ktery detekuje kostky pomoci cv2 na rasberry pin 5 a výsledek posílá na esp32, ktere vytvari wifi server s tabulkou s namerenima hodnotama ----- pro rasberry pi : "slozitejsi_uart.cpp" --- spousti se na rasberry pi "g++             slozitejsi_uart.cpp -o vysledky_pro_esp `pkg-config --cflags --libs opencv4`
-  ", "./vysledky_pro_esp" 
-  a pro esp32 : "main_esp_slozitejsi_uart.cpp" --- nahradte main.cpp ve slozce "uart_esp/src" za novy a dejte v platformio --- "pio run --target upload"
+  take je tu projekt, ktery detekuje kostky pomoci cv2 na rasberry pin 5 a výsledek posílá na esp32, ktere vytvari wifi server s tabulkou s namerenima hodnotama ----- pro rasberry pi : "slozitejsi_uart.cpp" --- spousti se na rasberry pi : 
+  ```bash
+  g++ slozitejsi_uart.cpp -o vysledky_pro_esp `pkg-config --cflags --libs opencv4
+  ```
+  ```bash
+  ./vysledky_pro_esp
+  ```
+  a pro esp32 : "main_esp_slozitejsi_uart.cpp" --- nahradte main.cpp ve slozce "uart_esp/src" za novy a dejte v platformio:
+  ```bash
+  pio run --target upload
+  ```
 
