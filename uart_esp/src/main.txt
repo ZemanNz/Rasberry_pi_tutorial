@@ -1,0 +1,41 @@
+#include <Arduino.h>
+
+void setup() {
+    Serial.begin(115200);      // UART0 pro PC
+    Serial2.begin(115200, SERIAL_8N1, 16, 17); // UART2 pro komunikaci s Pi
+}
+
+void loop() {
+    static int sync_state = 0;
+    static String msg = "";
+
+    while (Serial2.available()) {
+        char c = Serial2.read();
+
+        // Synchronizace na SYN0 a SYN1
+        if (sync_state == 0 && c == 'S') sync_state = 1;
+        else if (sync_state == 1 && c == 'Y') sync_state = 2;
+        else if (sync_state == 2 && c == 'N') sync_state = 3;
+        else if (sync_state == 3 && c == '0') sync_state = 4;
+        else if (sync_state == 4 && c == 'S') sync_state = 5;
+        else if (sync_state == 5 && c == 'Y') sync_state = 6;
+        else if (sync_state == 6 && c == 'N') sync_state = 7;
+        else if (sync_state == 7 && c == '1') {
+            sync_state = 8;
+            msg = "";
+        }
+        else if (sync_state == 8) {
+            if (c == '\n') {
+                Serial.print("Dostal jsem od Pi: ");
+                Serial.println(msg);
+                Serial2.println("Ahoj Raspberry!");
+                sync_state = 0;
+            } else {
+                msg += c;
+            }
+        } else {
+            sync_state = 0;
+        }
+    }
+    delay(10);
+}
