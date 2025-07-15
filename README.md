@@ -832,8 +832,9 @@ Tento krok můžeš provést ručně přes grafické menu, než přejdeš ke kon
    
 ### 4.0   info
 
-  ukázkový kod pro rasberry pi 5 se nachází zde pod nazvem .......
-  ukázkový kod pro esp32 nachazi se zde pod nazvem .......
+  ukázkový kod pro rasberry pi 5 se nachází zde pod nazvem : main_rasberry_uart
+  
+  ukázkový kod pro esp32 nachazi se zde pod nazvem esp_uart ----slozka
 
   take je tu projekt, ktery detekuje kostky pomoci cv2 na rasberry pin 5 a výsledek posílá na esp2 ----- ........
 
