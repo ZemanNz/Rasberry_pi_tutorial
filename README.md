@@ -723,5 +723,118 @@ model = torch.hub.load('ultralytics/yolov5', 'custom', path='runs/train/cubes-ex
 
 ---
 
+# UART komunikace mezi Raspberry Pi 5 a ESP32
+
+Tento README popisuje krok za krokem nastavení Raspberry Pi 5 pro **UART** komunikaci s **ESP32** a ukazuje příkazy pro konfiguraci, testování a příklady kódu.
+
+---
+
+## 1. Požadavky
+
+* Raspberry Pi 5 s nainstalovaným Raspberry Pi OS (nebo kompatibilním OS)
+* ESP32 modul (např. DevKitC)
+* Dupont kabely pro propojení TX↔RX a GND↔GND
+* Přístup k terminálu (lokálně nebo přes SSH)
+
+## 2. Hardwarové zapojení
+
+| Raspberry Pi 5 (GPIO) | ESP32       |
+| --------------------- | ----------- |
+| GPIO14 (TXD, pin 8)   | GPIO16 (RX) |
+| GPIO15 (RXD, pin 10)  | GPIO17 (TX) |
+| GND (např. pin 6)     | GND         |
+
+> Ujisti se, že jsou obě zařízení napájeny 3.3 V logikou, není potřeba žádný úrovňový převodník.
+
+### 2.1 Povolení UART přes raspi-config
+
+Tento krok můžeš provést ručně přes grafické menu, než přejdeš ke konfiguraci souborů.
+
+1. Spusť konfigurační nástroj:
+
+   ```bash
+   sudo raspi-config
+   ```
+2. Vyber **Interfacing Options** → **Serial**.
+3. Ujisti se, že **"Login shell over serial"** je **No** (nezapíná konzoli na UART).
+4. Nastav **"Serial interface"** na **Yes** (povolit hardware UART).
+5. Po dokončení vyber **Finish** a restartuj Pi:
+
+   ```bash
+   sudo reboot
+   ```
+
+## 3. Konfigurace Raspberry Pi
+
+### 3.1 Úprava `/boot/firmware/config.txt`
+
+1. Otevři konfigurační soubor:
+
+   ```bash
+   sudo nano /boot/firmware/config.txt
+   ```
+2. Najdi sekci `[all]` (nebo ji přidej), a pod ni vlož:
+
+   ```ini
+   [all]
+   enable_uart=1       # Aktivace UART hardwaru
+   dtparam=uart0=on    # Přiřazení GPIO14/15 k UART0 na Pi 5
+   ```
+3. Ulož (`Ctrl+O`, Enter) a zavři (`Ctrl+X`).
+4. Restartuj Pi:
+
+   ```bash
+   sudo reboot
+   ```
+
+### 3.2 Ověření `/boot/firmware/cmdline.txt`
+
+* Ujisti se, že **neobsahuje** parametry `console=serial0` nebo `console=ttyAMA*`, jinak bude UART obsazen konzolí.
+
+* Tvůj řetězec by mohl vypadat takto:
+
+  ```txt
+  console=tty1 root=PARTUUID=90f94de3-02 rootfstype=ext4 fsck.repair=yes rootwait quiet splash plymouth.ignore-serial-consoles cfg80211.ieee80211_regdom=CZ
+  ```
+
+* Pro ověření symbolického odkazu na sériové zařízení spusť:
+
+  ```bash
+  ls -l /dev/serial0
+  ```
+
+  * Výstup by měl ukázat, že `/dev/serial0` odkazuje na `ttyAMA10` nebo podobné zařízení:
+
+    ```bash
+    lrwxrwxrwx 1 root root 8 ... serial0 -> ttyAMA10
+    ```
+  * Pokud ukazuje na `ttyAMA10`, **je vše v pořádku** – na Raspberry Pi 5 se UART0 mapuje právě tam. V dřívějších verzích se používal `ttyAMA0`.
+
+### 3.3 Nastavení oprávnění
+
+1. Přidej svého uživatele do skupiny `dialout` (umožní čtení/zápis UART bez `sudo`):
+
+   ```bash
+   sudo adduser $USER dialout
+   ```
+2. Odhlas se a přihlas znovu (nebo restartuj), aby se změna projevila:
+
+   ```bash
+   exit
+   # nebo
+   sudo reboot
+   ```
+3. Ověř, že jsi ve skupině:
+
+   ```bash
+   groups
+   # výstup by měl obsahovat: dialout
+   
+### 4.0   info
+
+  ukázkový kod pro rasberry pi 5 se nachází zde pod nazvem .......
+  ukázkový kod pro esp32 nachazi se zde pod nazvem .......
+
+  take je tu projekt, ktery detekuje kostky pomoci cv2 na rasberry pin 5 a výsledek posílá na esp2 ----- ........
 
 
